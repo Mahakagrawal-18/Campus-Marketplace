@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Deals | MarketPlace IITJ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="fade-in-page">
+    <header>
+        <div class="nav-top">
+            <h1 class="logo" onclick="window.location.href='index.html'" style="cursor:pointer">
+                College<span>Items</span>
+            </h1>
+            <div class="header-controls">
+                <a href="index.html" class="nav-item-link">Back to Home</a>
+                <a href="sell.html" class="sell-btn">+ SELL</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-wrapper">
+        <main class="content-wrapper">
+            <h2 class="main-heading">Transaction Dashboard</h2>
+            
+            <div class="dashboard-card">
+                <div class="tab-container">
+                    <button class="tab-btn active">Listings I Bought</button>
+                    <button class="tab-btn">Listings I Sold</button>
+                </div>
+
+                <div class="transaction-list" id="transaction-container">
+    </div>
+
+                    
+                </div>
+            </div>
+        </main>
+    </div>
+
+  <script>
+    window.onload = function() {
+        const container = document.getElementById('transaction-container');
+        const itemName = localStorage.getItem('activeTransactionItem');
+        const itemPrice = localStorage.getItem('activeTransactionPrice');
+
+        if (itemName && itemPrice) {
+            // This builds the real item dynamically
+            container.innerHTML = `
+                <div class="transaction-item">
+                    <div class="item-details">
+                        <span class="status-badge reserved">Status: Reserved</span>
+                        <h3>${itemName}</h3>
+                        <p class="amount">Amount: <strong>₹${itemPrice}</strong></p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="release-btn" onclick="completeDeal()">Release Escrow</button>
+                        <button class="cancel-btn" onclick="cancelDeal()">Cancel</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // This shows when there is no data saved
+            container.innerHTML = `
+                <div class="empty-state" style="text-align:center; padding: 40px;">
+                    <p>No active deals. Items you "Secure Buy" will appear here.</p>
+                </div>
+            `;
+        }
+    }
+
+    function completeDeal() {
+        alert("Transaction Finished! Status: Completed.");
+        localStorage.removeItem('activeTransactionItem');
+        localStorage.removeItem('activeTransactionPrice');
+        location.reload();
+    }
+
+    function cancelDeal() {
+        if(confirm("Cancel this reservation?")) {
+            localStorage.removeItem('activeTransactionItem');
+            localStorage.removeItem('activeTransactionPrice');
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>
+

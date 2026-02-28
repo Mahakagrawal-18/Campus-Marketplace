@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Escrow Dashboard — Campus Exchange</title>
+  <link rel="stylesheet" href="escrow-dashboard.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- ░░ SCANLINE OVERLAY ░░ -->
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+  ═══════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="header-left">
+      <a href="newhomepage.html" class="logo">
+        CAMPUS<span>EXCHANGE</span>
+      </a>
+      <div class="header-divider"></div>
+      <span class="header-label">ESCROW VAULT</span>
+    </div>
+
+    <div class="header-center">
+      <div class="live-dot"></div>
+      <span class="live-text">LIVE</span>
+      <span class="header-clock" id="headerClock">--:--:--</span>
+    </div>
+
+    <div class="header-right">
+      <div class="user-badge" id="userBadge">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <span class="user-name" id="userName">Loading…</span>
+          <span class="user-trust" id="userTrust">★ 5.0</span>
+        </div>
+      </div>
+      <a href="newhomepage.html" class="header-btn">
+        <i class="fa fa-store"></i> MARKET
+      </a>
+      <button class="header-btn danger" onclick="logout()">
+        <i class="fa fa-sign-out-alt"></i> OUT
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN
+  ═══════════════════════════════════════════ -->
+  <main class="dashboard-main">
+
+    <!-- ── PAGE TITLE ── -->
+    <div class="page-head">
+      <div class="page-head-left">
+        <div class="page-eyebrow">TRANSACTION LEDGER</div>
+        <h1 class="page-title">My Escrow Dashboard</h1>
+      </div>
+      <div class="page-head-right">
+        <button class="refresh-btn" onclick="refreshAll()" title="Refresh">
+          <i class="fa fa-sync-alt" id="refreshIcon"></i> REFRESH
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STAT STRIP ── -->
+    <div class="stat-strip" id="statStrip">
+      <div class="stat-card skeleton-card"></div>
+      <div class="stat-card skeleton-card"></div>
+      <div class="stat-card skeleton-card"></div>
+      <div class="stat-card skeleton-card"></div>
+      <div class="stat-card skeleton-card"></div>
+    </div>
+
+    <!-- ── ESCROW PIPELINE VISUAL ── -->
+    <div class="pipeline-section">
+      <div class="section-label">ESCROW PIPELINE</div>
+      <div class="pipeline">
+        <div class="pipeline-step" data-stage="available">
+          <div class="pipeline-icon"><i class="fa fa-tag"></i></div>
+          <div class="pipeline-name">AVAILABLE</div>
+          <div class="pipeline-count" id="pipeAvailable">—</div>
+        </div>
+        <div class="pipeline-arrow"><i class="fa fa-chevron-right"></i></div>
+        <div class="pipeline-step active" data-stage="reserved">
+          <div class="pipeline-icon pulse-icon"><i class="fa fa-lock"></i></div>
+          <div class="pipeline-name">RESERVED</div>
+          <div class="pipeline-count" id="pipeReserved">—</div>
+        </div>
+        <div class="pipeline-arrow"><i class="fa fa-chevron-right"></i></div>
+        <div class="pipeline-step" data-stage="completed">
+          <div class="pipeline-icon"><i class="fa fa-check-circle"></i></div>
+          <div class="pipeline-name">COMPLETED</div>
+          <div class="pipeline-count" id="pipeCompleted">—</div>
+        </div>
+        <div class="pipeline-arrow split"><i class="fa fa-code-branch"></i></div>
+        <div class="pipeline-step warn" data-stage="disputed">
+          <div class="pipeline-icon"><i class="fa fa-exclamation-triangle"></i></div>
+          <div class="pipeline-name">DISPUTED</div>
+          <div class="pipeline-count" id="pipeDisputed">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTROLS ── -->
+    <div class="controls-row">
+      <div class="tab-group">
+        <button class="tab active" data-role="all"    onclick="setRole('all',    this)">ALL</button>
+        <button class="tab"        data-role="buyer"  onclick="setRole('buyer',  this)">BOUGHT</button>
+        <button class="tab"        data-role="seller" onclick="setRole('seller', this)">SOLD</button>
+      </div>
+
+      <div class="filter-group">
+        <button class="chip active" data-status=""          onclick="setStatus('', this)">ALL STATUS</button>
+        <button class="chip"        data-status="Reserved"  onclick="setStatus('Reserved',  this)">RESERVED</button>
+        <button class="chip"        data-status="Completed" onclick="setStatus('Completed', this)">COMPLETED</button>
+        <button class="chip"        data-status="Cancelled" onclick="setStatus('Cancelled', this)">CANCELLED</button>
+        <button class="chip"        data-status="Disputed"  onclick="setStatus('Disputed',  this)">DISPUTED</button>
+      </div>
+    </div>
+
+    <!-- ── TRANSACTION TABLE ── -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <span>ITEM</span>
+        <span>COUNTERPARTY</span>
+        <span>AMOUNT</span>
+        <span>STATUS</span>
+        <span>ESCROW STATE</span>
+        <span>ACTIONS</span>
+      </div>
+      <div id="txnRows">
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       REVIEW MODAL
+  ═══════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="reviewModal">
+    <div class="modal-box">
+      <div class="modal-tag">REVIEW</div>
+      <h3 class="modal-title">Rate This Transaction</h3>
+      <p class="modal-sub" id="reviewSub">Rate your counterparty</p>
+
+      <div class="star-row" id="starRow">
+        <button class="star" data-v="1" onclick="setStar(1)">★</button>
+        <button class="star" data-v="2" onclick="setStar(2)">★</button>
+        <button class="star" data-v="3" onclick="setStar(3)">★</button>
+        <button class="star" data-v="4" onclick="setStar(4)">★</button>
+        <button class="star" data-v="5" onclick="setStar(5)">★</button>
+      </div>
+      <div class="rating-label" id="ratingLabel">Select a rating</div>
+
+      <textarea id="reviewComment" class="modal-textarea" placeholder="Describe your experience (optional)…"></textarea>
+
+      <div class="modal-footer">
+        <button class="modal-btn cancel" onclick="closeModal('reviewModal')">CANCEL</button>
+        <button class="modal-btn submit" onclick="submitReview()">SUBMIT ★</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       DISPUTE MODAL
+  ═══════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="disputeModal">
+    <div class="modal-box danger-box">
+      <div class="modal-tag danger-tag">⚠ DISPUTE</div>
+      <h3 class="modal-title">Raise a Dispute</h3>
+      <p class="modal-sub">Describe the issue clearly. An admin will review and resolve it.</p>
+      <textarea id="disputeReason" class="modal-textarea danger-textarea" placeholder="What went wrong? Be specific…"></textarea>
+      <div class="modal-footer">
+        <button class="modal-btn cancel" onclick="closeModal('disputeModal')">CANCEL</button>
+        <button class="modal-btn danger-btn" onclick="submitDispute()">RAISE DISPUTE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TOAST
+  ═══════════════════════════════════════════ -->
+  <div id="toast" class="toast"></div>
+
+  <script src="api.js"></script>
+  <script src="escrow-dashboard.js"></script>
+</body>
+</html>

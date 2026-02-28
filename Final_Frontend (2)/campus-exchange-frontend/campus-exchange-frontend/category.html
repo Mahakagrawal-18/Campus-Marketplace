@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CollegeItems | Category</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<header>
+  <div class="nav-top">
+    <h1 class="logo" onclick="location.href='index.html'" style="cursor:pointer">Market<span>Place</span></h1>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search items...">
+      <button id="searchBtn"><i class="fa fa-search"></i></button>
+    </div>
+
+    <div class="user-actions">
+      <button class="login-btn" id="loginBtn" onclick="location.href='login.html'">Login</button>
+      <button class="sell-btn" id="sellBtn">+ SELL</button>
+      <button class="login-btn" id="logoutBtn" onclick="logout()" style="display:none">Logout</button>
+    </div>
+  </div>
+</header>
+
+<main class="content-wrapper">
+  <a href="newhomepage.html" style="display:inline-block;margin-bottom:20px;">← Back to Categories</a>
+  <h2 id="categoryTitle" class="main-heading"></h2>
+
+  <!-- Filter bar -->
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;align-items:center;">
+    <select id="filterCondition" style="padding:8px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;">
+      <option value="">All Conditions</option>
+      <option value="New">New</option>
+      <option value="Like New">Like New</option>
+      <option value="Good">Good</option>
+      <option value="Fair">Fair</option>
+      <option value="Poor">Poor</option>
+    </select>
+    <select id="filterSort" style="padding:8px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;">
+      <option value="-createdAt">Newest First</option>
+      <option value="price">Price: Low to High</option>
+      <option value="-price">Price: High to Low</option>
+    </select>
+    <button id="applyFilter" style="padding:8px 18px;border-radius:8px;background:#6366f1;color:#fff;border:none;cursor:pointer;font-weight:600;">Apply</button>
+  </div>
+
+  <div id="loadingMsg" style="text-align:center;padding:40px;color:#94a3b8;font-size:18px;">
+    <i class="fa fa-spinner fa-spin"></i> Loading listings...
+  </div>
+  <div id="listingsContainer" class="category-grid" style="display:none"></div>
+</main>
+
+<!-- Contact Seller Modal -->
+<div id="sellerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border-radius:16px;padding:32px;max-width:400px;width:90%;position:relative;">
+    <button onclick="closeSellerModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">✕</button>
+    <h3 id="modalTitle" style="color:#fff;margin-bottom:16px;"></h3>
+    <div id="modalBody" style="color:#94a3b8;line-height:1.8;"></div>
+    <button id="initiateBtn" style="margin-top:20px;width:100%;padding:13px;background:#22c55e;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px;">
+      Reserve This Item
+    </button>
+  </div>
+</div>
+
+<footer class="main-footer">
+  <p>© 2026 CollegeItems Marketspace| All Rights Reserved</p>
+</footer>
+
+<script src="api.js"></script>
+<script>
+let currentListingId = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  updateNavAuth();
+
+  const params   = new URLSearchParams(window.location.search);
+  const category = params.get("category");
+  const search   = params.get("search");
+
+  if (category) document.getElementById("categoryTitle").textContent = `${category} for Sale`;
+  else if (search) document.getElementById("categoryTitle").textContent = `Search: "${search}"`;
+  else document.getElementById("categoryTitle").textContent = "All Listings";
+
+  loadListings();
+
+  document.getElementById("applyFilter").addEventListener("click", loadListings);
+  document.getElementById("searchBtn").addEventListener("click", () => {
+    const q = document.getElementById("searchInput").value.trim();
+    if (q) window.location.href = `category.html?search=${encodeURIComponent(q)}`;
+  });
+  document.getElementById("searchInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("searchBtn").click();
+  });
+
+  const sellBtn = document.getElementById("sellBtn");
+  if (sellBtn) {
+    sellBtn.addEventListener("click", () => {
+      if (!isLoggedIn()) { showToast("Please login to sell.", "info"); setTimeout(() => location.href="login.html", 900); }
+      else location.href = "sell.html";
+    });
+  }
+});
+
+async function loadListings() {
+  const params    = new URLSearchParams(window.location.search);
+  const category  = params.get("category");
+  const search    = params.get("search");
+  const condition = document.getElementById("filterCondition").value;
+  const sort      = document.getElementById("filterSort").value;
+
+  let url = `/api/listings?limit=40&sort=${sort}`;
+  if (category)  url += `&category=${encodeURIComponent(category)}`;
+  if (search)    url += `&search=${encodeURIComponent(search)}`;
+  if (condition) url += `&condition=${encodeURIComponent(condition)}`;
+
+  document.getElementById("loadingMsg").style.display = "block";
+  document.getElementById("listingsContainer").style.display = "none";
+
+  try {
+    const res    = await fetch(`${API_BASE}${url}`);
+    const result = await res.json();
+
+    document.getElementById("loadingMsg").style.display = "none";
+    const container = document.getElementById("listingsContainer");
+    container.style.display = "grid";
+    container.innerHTML = "";
+
+    if (!result.data || result.data.length === 0) {
+      container.innerHTML = `<p style="color:#94a3b8;grid-column:1/-1;text-align:center;padding:40px;">No listings found.</p>`;
+      return;
+    }
+
+    result.data.forEach(item => {
+      const imgSrc = item.images?.[0]?.url || "https://via.placeholder.com/300x200?text=No+Image";
+      const stars  = "★".repeat(Math.round(item.seller?.trustScore || 5)) + "☆".repeat(5 - Math.round(item.seller?.trustScore || 5));
+
+      container.innerHTML += `
+        <div class="category-card" style="cursor:pointer;">
+          <img src="${imgSrc}" alt="${item.title}" onclick="openSellerModal('${item._id}', this)" 
+               style="width:100%;height:180px;object-fit:cover;border-radius:10px 10px 0 0;">
+          <div class="card-text" style="padding:12px;">
+            <h3 style="margin:0 0 6px;font-size:16px;">${item.title}</h3>
+            <p style="color:#22c55e;font-weight:700;margin:4px 0;">₹${item.price.toLocaleString()}</p>
+            <p style="color:#94a3b8;font-size:13px;margin:2px 0;">${item.condition} · ${item.category}</p>
+            <p style="color:#f59e0b;font-size:13px;margin:4px 0;">${stars} ${item.seller?.name || "Seller"}</p>
+            <button onclick="openSellerModal('${item._id}')" 
+                    style="margin-top:10px;width:100%;padding:9px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+              View & Contact
+            </button>
+          </div>
+        </div>`;
+    });
+  } catch (err) {
+    document.getElementById("loadingMsg").textContent = "⚠️ Failed to load listings. Is the backend running?";
+    console.error(err);
+  }
+}
+
+async function openSellerModal(listingId) {
+  if (!isLoggedIn()) {
+    showToast("Please login to view seller details.", "info");
+    setTimeout(() => { window.location.href = "login.html"; }, 900);
+    return;
+  }
+
+  currentListingId = listingId;
+
+  try {
+    const res  = await apiFetch(`/api/listings/${listingId}`);
+    const data = await res.json();
+    const item = data.data;
+
+    document.getElementById("modalTitle").textContent = item.title;
+    document.getElementById("modalBody").innerHTML = `
+      <strong style="color:#fff;">Price:</strong> ₹${item.price.toLocaleString()}<br>
+      <strong style="color:#fff;">Condition:</strong> ${item.condition}<br>
+      <strong style="color:#fff;">Category:</strong> ${item.category}<br>
+      <strong style="color:#fff;">Description:</strong> ${item.description || "—"}<br><br>
+      <strong style="color:#fff;">Seller:</strong> ${item.seller?.name}<br>
+      <strong style="color:#fff;">Trust Score:</strong> ${"★".repeat(Math.round(item.seller?.trustScore || 5))} (${item.seller?.trustScore})<br>
+      <strong style="color:#fff;">Hostel:</strong> ${item.seller?.hostel || "—"}
+    `;
+
+    const isOwn = getUser()?._id === item.seller?._id;
+    const available = item.status === "Available";
+
+    document.getElementById("initiateBtn").textContent  = isOwn ? "This is your listing" : available ? "Reserve This Item" : `Item is ${item.status}`;
+    document.getElementById("initiateBtn").disabled     = isOwn || !available;
+    document.getElementById("initiateBtn").style.background = (!isOwn && available) ? "#22c55e" : "#475569";
+
+    if (!isOwn && available) {
+      document.getElementById("initiateBtn").onclick = () => initiateTransaction(item._id, item.price);
+    }
+
+    document.getElementById("sellerModal").style.display = "flex";
+  } catch (err) {
+    showToast("Failed to load listing details.", "error");
+  }
+}
+
+function closeSellerModal() {
+  document.getElementById("sellerModal").style.display = "none";
+  currentListingId = null;
+}
+
+async function initiateTransaction(listingId, price) {
+  const btn = document.getElementById("initiateBtn");
+  btn.disabled = true;
+  btn.textContent = "Reserving...";
+
+  try {
+    const res  = await apiFetch("/api/transactions", {
+      method: "POST",
+      body: JSON.stringify({ listingId, agreedPrice: price }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast("🎉 Item reserved! Check your transactions.", "success");
+      closeSellerModal();
+      loadListings();
+    } else {
+      showToast(data.message || "Could not reserve item.", "error");
+      btn.disabled = false;
+      btn.textContent = "Reserve This Item";
+    }
+  } catch {
+    showToast("Server error. Try again.", "error");
+    btn.disabled = false;
+    btn.textContent = "Reserve This Item";
+  }
+}
+</script>
+</body>
+</html>
