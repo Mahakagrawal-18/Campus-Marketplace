@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verify Email - Campus Exchange</title>
+  <link rel="stylesheet" href="register.css">
+  <style>
+    .otp-inputs { display:flex; gap:10px; justify-content:center; margin:20px 0; }
+    .otp-inputs input { width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid #334155;border-radius:10px;background:#1e293b;color:#fff; }
+    .otp-inputs input:focus { border-color:#6366f1;outline:none; }
+    .resend-link { color:#6366f1;cursor:pointer;text-decoration:underline;font-size:14px; }
+    #countdown { color:#94a3b8;font-size:13px;margin-top:6px; }
+  </style>
+</head>
+<body>
+<div class="register-container">
+  <h2>Verify Your Email</h2>
+  <p class="subtitle" id="verifySubtitle">Enter the 6-digit OTP sent to your @iitj.ac.in email</p>
+
+  <div class="otp-inputs">
+    <input type="text" maxlength="1" class="otp-digit">
+    <input type="text" maxlength="1" class="otp-digit">
+    <input type="text" maxlength="1" class="otp-digit">
+    <input type="text" maxlength="1" class="otp-digit">
+    <input type="text" maxlength="1" class="otp-digit">
+    <input type="text" maxlength="1" class="otp-digit">
+  </div>
+
+  <button id="verifyBtn" style="width:100%;padding:14px;font-size:16px;border:none;border-radius:10px;background:#6366f1;color:#fff;font-weight:700;cursor:pointer;">
+    Verify OTP
+  </button>
+
+  <div style="text-align:center;margin-top:18px;">
+    <span id="countdown">Resend available in 60s</span><br>
+    <span class="resend-link" id="resendLink" style="display:none;" onclick="resendOTP()">Resend OTP</span>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const email = localStorage.getItem("ce_pending_email");
+  if (!email) { window.location.href = "register.html"; return; }
+
+  document.getElementById("verifySubtitle").textContent =
+    `Enter the 6-digit OTP sent to ${email}`;
+
+  // OTP digit auto-advance
+  const digits = document.querySelectorAll(".otp-digit");
+  digits.forEach((input, i) => {
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/[^0-9]/g, "");
+      if (input.value && i < digits.length - 1) digits[i + 1].focus();
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !input.value && i > 0) digits[i - 1].focus();
+    });
+  });
+
+  // Countdown timer
+  let seconds = 60;
+  const countdown = document.getElementById("countdown");
+  const resendLink = document.getElementById("resendLink");
+  const timer = setInterval(() => {
+    seconds--;
+    countdown.textContent = `Resend available in ${seconds}s`;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      countdown.style.display = "none";
+      resendLink.style.display = "inline";
+    }
+  }, 1000);
+
+  // Verify button
+  document.getElementById("verifyBtn").addEventListener("click", async () => {
+    const otp = Array.from(digits).map(d => d.value).join("");
+    if (otp.length !== 6) { showToast("Please enter all 6 digits.", "error"); return; }
+
+    const btn = document.getElementById("verifyBtn");
+    btn.disabled = true;
+    btn.textContent = "Verifying...";
+
+    try {
+      const res  = await fetch(`${API_BASE}/api/auth/verify-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        saveTokens(data.accessToken, data.refreshToken);
+        saveUser(data.user);
+        localStorage.removeItem("ce_pending_email");
+        showToast("✅ Email verified! Welcome to Campus Exchange.", "success");
+        setTimeout(() => { window.location.href = "newhomepage.html"; }, 1000);
+      } else {
+        showToast(data.message || "Invalid OTP.", "error");
+        btn.disabled = false;
+        btn.textContent = "Verify OTP";
+      }
+    } catch {
+      showToast("Server error. Try again.", "error");
+      btn.disabled = false;
+      btn.textContent = "Verify OTP";
+    }
+  });
+});
+
+async function resendOTP() {
+  const email = localStorage.getItem("ce_pending_email");
+  try {
+    const res  = await fetch(`${API_BASE}/api/auth/resend-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    showToast(data.success ? "OTP resent! Check your email." : data.message, data.success ? "success" : "error");
+  } catch {
+    showToast("Failed to resend OTP.", "error");
+  }
+}
+</script>
+</body>
+</html>

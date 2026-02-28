@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Other Items | CollegeItems</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="fade-in-page">
+    <header>
+        <div class="nav-top">
+            <div class="logo-container" onclick="location.href='index.html'">
+                <h1 class="logo pulse">College<span>Items</span></h1>
+            </div>
+            <div class="search-container">
+                <input type="text" placeholder="Search in Other...">
+                <button type="submit"><i class="fa fa-search"></i></button>
+            </div>
+            <div class="user-actions">
+                <button class="login-btn">Login</button>
+                <button class="sell-btn" id="sellBtn">+ SELL</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="content-wrapper">
+        <div class="category-header">
+            <a href="index.html" class="back-link" style="text-decoration: none; color: #007BFF; font-weight: 600;">
+                <i class="fa fa-arrow-left"></i> Back to Categories
+            </a>
+            <h2 class="main-heading" style="text-align: left; margin-top: 20px;">Other Miscellaneous Items</h2>
+        </div>
+        
+        <div class="items-grid">
+            <div class="item-card">
+                <div class="item-image">
+                    <img src="https://images.unsplash.com/photo-1527788263495-3518a531742d?w=500" alt="Umbrella">
+                </div>
+                <div class="item-info">
+                    <span class="item-price">₹200</span>
+                    <h3 class="item-title">Large Windproof Umbrella</h3>
+                    <p class="item-desc">Solid black, very sturdy. Perfect for monsoon on campus.</p>
+                    <p class="item-location"><i class="fa fa-map-marker-alt"></i> Hostel D, Room 301</p>
+                    <button class="contact-btn">Contact Seller</button>
+                </div>
+            </div>
+
+            <div class="item-card">
+                <div class="item-image">
+                    <img src="https://images.unsplash.com/photo-1519750783826-51d01777ed8f?w=500" alt="Fairy Lights">
+                </div>
+                <div class="item-info">
+                    <span class="item-price">₹100</span>
+                    <h3 class="item-title">Warm White Fairy Lights</h3>
+                    <p class="item-desc">5 meters long. Great for room decoration.</p>
+                    <p class="item-location"><i class="fa fa-map-marker-alt"></i> Hostel B, Room 105</p>
+                    <button class="contact-btn">Contact Seller</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2026 CollegeItems. Built with ❤️ for Students.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
