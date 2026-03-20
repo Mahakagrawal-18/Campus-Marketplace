@@ -63,6 +63,6 @@ Only college members can participate, ensuring reliability.</p>
 <ul>
   <li>Mahak Agrawal</li>
   <li>Angel Agarwal</li>
-  <li>Swasti Singhal 8</li>
+  <li>Swasti Singhal </li>
   <li>Veer Poddar</li>
 </ul>
